@@ -55,7 +55,7 @@ const ScamRain = () => {
     const expId = nextId++;
     setExplosions((prev) => [
       ...prev,
-      { id: expId, x: p.x, y: 48 + Math.random() * 4, word: p.word },
+      { id: expId, x: p.x, y: p.fallDistance, word: p.word },
     ]);
     setTimeout(() => {
       setExplosions((prev) => prev.filter((e) => e.id !== expId));
