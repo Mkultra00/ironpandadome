@@ -75,7 +75,7 @@ const VoiceChat = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify({ messages: chatMessages }),
+          body: JSON.stringify({ messages: chatMessages, voiceMode: lastInputWasVoiceRef.current }),
         }
       );
 
