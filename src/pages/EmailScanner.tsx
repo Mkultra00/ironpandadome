@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ArrowLeft, Search, RotateCcw } from "lucide-react";
+import { useState, useRef } from "react";
+import { ArrowLeft, Search, RotateCcw, Camera, ImagePlus } from "lucide-react";
 import { Link } from "react-router-dom";
 import PandoAvatar from "@/components/PandoAvatar";
 import SafetyBadge from "@/components/SafetyBadge";
@@ -15,9 +15,33 @@ const EmailScanner = () => {
   const [emailText, setEmailText] = useState("");
   const [isScanning, setIsScanning] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageBase64, setImageBase64] = useState<string | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageFile = (file: File) => {
+    if (!file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      setImagePreview(dataUrl);
+      // Extract base64 portion after the comma
+      setImageBase64(dataUrl.split(",")[1]);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeImage = () => {
+    setImagePreview(null);
+    setImageBase64(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
+  };
 
   const scanEmail = async () => {
-    if (!emailText.trim()) return;
+    if (!emailText.trim() && !imageBase64) return;
     setIsScanning(true);
     setResult(null);
 
@@ -30,7 +54,10 @@ const EmailScanner = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify({ emailContent: emailText }),
+          body: JSON.stringify({
+            emailContent: emailText || undefined,
+            imageBase64: imageBase64 || undefined,
+          }),
         }
       );
 
@@ -41,7 +68,7 @@ const EmailScanner = () => {
       console.error(e);
       setResult({
         level: "caution",
-        verdict: "I had trouble analyzing this email. Please try again.",
+        verdict: "I had trouble analyzing this. Please try again.",
         redFlags: [],
         advice: "If you're unsure about this email, don't click any links or reply to it.",
       });
@@ -53,7 +80,10 @@ const EmailScanner = () => {
   const reset = () => {
     setEmailText("");
     setResult(null);
+    removeImage();
   };
+
+  const hasInput = emailText.trim() || imageBase64;
 
   return (
     <div className="min-h-screen pb-20">
@@ -65,7 +95,7 @@ const EmailScanner = () => {
         <PandoAvatar size="sm" animate={false} />
         <div>
           <h2 className="font-bold text-lg">Check an Email</h2>
-          <p className="text-sm text-muted-foreground">Paste a suspicious email below</p>
+          <p className="text-sm text-muted-foreground">Paste text or upload a screenshot</p>
         </div>
       </div>
 
@@ -76,11 +106,72 @@ const EmailScanner = () => {
               value={emailText}
               onChange={(e) => setEmailText(e.target.value)}
               placeholder="Paste the email content here... Include the sender, subject line, and full body text."
-              className="w-full h-48 rounded-lg border border-input bg-background px-4 py-3 text-body focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+              className="w-full h-40 rounded-lg border border-input bg-background px-4 py-3 text-body focus:outline-none focus:ring-2 focus:ring-ring resize-none"
             />
+
+            {/* Image upload area */}
+            {imagePreview ? (
+              <div className="relative rounded-lg border border-input overflow-hidden bg-muted/30">
+                <img
+                  src={imagePreview}
+                  alt="Uploaded screenshot"
+                  className="w-full max-h-56 object-contain"
+                />
+                <button
+                  onClick={removeImage}
+                  className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold active:scale-95 shadow-md"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-3">
+                {/* Upload image */}
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex-1 flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-muted-foreground/30 px-4 py-4 text-muted-foreground hover:border-primary hover:text-primary transition-colors active:scale-[0.97]"
+                >
+                  <ImagePlus className="h-5 w-5" />
+                  <span className="text-sm font-semibold">Upload Image</span>
+                </button>
+
+                {/* Camera capture */}
+                <button
+                  onClick={() => cameraInputRef.current?.click()}
+                  className="flex-1 flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-muted-foreground/30 px-4 py-4 text-muted-foreground hover:border-primary hover:text-primary transition-colors active:scale-[0.97]"
+                >
+                  <Camera className="h-5 w-5" />
+                  <span className="text-sm font-semibold">Take Photo</span>
+                </button>
+              </div>
+            )}
+
+            {/* Hidden file inputs */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/jpg"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleImageFile(file);
+              }}
+            />
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleImageFile(file);
+              }}
+            />
+
             <button
               onClick={scanEmail}
-              disabled={!emailText.trim() || isScanning}
+              disabled={!hasInput || isScanning}
               className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-4 text-primary-foreground text-body font-bold active:scale-[0.97] disabled:opacity-50 transition-transform"
             >
               <Search className="h-5 w-5" />

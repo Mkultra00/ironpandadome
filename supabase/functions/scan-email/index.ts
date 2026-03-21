@@ -7,7 +7,7 @@ const corsHeaders = {
 
 const SYSTEM_PROMPT = `You are Pando, the Iron Panda — a cybersecurity expert analyzing emails for scams and phishing.
 
-Analyze the email provided and respond ONLY with valid JSON in this exact format:
+Analyze the email provided (as text and/or screenshot image) and respond ONLY with valid JSON in this exact format:
 {
   "level": "safe" | "caution" | "danger",
   "verdict": "A one-sentence plain-language verdict",
@@ -22,6 +22,7 @@ Analysis criteria:
 - Identify suspicious links or URL patterns
 - Flag generic greetings vs personalized
 - Note grammatical errors or unusual formatting
+- For images: read all visible text, check logos, layout, and visual cues of phishing
 
 Be protective — when in doubt, mark as "caution" or "danger".
 Use simple, warm language a non-technical person would understand.`;
@@ -30,9 +31,33 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { emailContent } = await req.json();
+    const { emailContent, imageBase64 } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    // Build message content - support text, image, or both
+    const userContent: Array<{ type: string; text?: string; image_url?: { url: string } }> = [];
+
+    if (emailContent) {
+      userContent.push({ type: "text", text: `Analyze this email:\n\n${emailContent}` });
+    }
+
+    if (imageBase64) {
+      userContent.push({
+        type: "image_url",
+        image_url: { url: `data:image/jpeg;base64,${imageBase64}` },
+      });
+      if (!emailContent) {
+        userContent.push({ type: "text", text: "Analyze this email screenshot for scams, phishing, or fraud. Read all text visible in the image." });
+      }
+    }
+
+    if (userContent.length === 0) {
+      throw new Error("No content provided");
+    }
+
+    // Use a vision-capable model when image is included
+    const model = imageBase64 ? "google/gemini-2.5-flash" : "google/gemini-2.5-flash";
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -41,10 +66,10 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model,
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: `Analyze this email:\n\n${emailContent}` },
+          { role: "user", content: userContent },
         ],
         tools: [{
           type: "function",
@@ -101,7 +126,7 @@ serve(async (req) => {
     console.error("scan-email error:", e);
     return new Response(JSON.stringify({
       level: "caution",
-      verdict: "I had trouble analyzing this email. Please try again.",
+      verdict: "I had trouble analyzing this. Please try again.",
       redFlags: [],
       advice: "If you're unsure, don't click any links or reply to it.",
     }), {
