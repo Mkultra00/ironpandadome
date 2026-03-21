@@ -19,7 +19,7 @@ const PandoAvatar = ({ size = "md", animate = true, className = "" }: PandoAvata
       src={pandoImg}
       alt="Pando, your Guardian AI panda"
       className={`${sizeMap[size]} object-contain ${className}`}
-      style={animate ? { animation: "sword-wave 2.5s ease-in-out infinite", transformOrigin: "center bottom" } : {}}
+      style={animate ? { animation: "sword-wave 1.8s ease-in-out infinite", transformOrigin: "70% 60%" } : {}}
     />
   );
 };
