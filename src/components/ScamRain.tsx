@@ -14,6 +14,7 @@ interface Particle {
   duration: number;
   fontSize: number;
   opacity: number;
+  fallDistance: number;
 }
 
 interface Explosion {
