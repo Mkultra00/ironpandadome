@@ -22,10 +22,11 @@ serve(async (req) => {
       });
     }
 
-    const selectedVoice = voiceId || "JBFqnCBsd6RMkjVDRZzb"; // default: George
+    const selectedVoice = voiceId || "JBFqnCBsd6RMkjVDRZzb";
 
+    // Use streaming endpoint for lower latency
     const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${selectedVoice}?output_format=mp3_44100_128`,
+      `https://api.elevenlabs.io/v1/text-to-speech/${selectedVoice}/stream?output_format=mp3_44100_128`,
       {
         method: "POST",
         headers: {
@@ -40,6 +41,7 @@ serve(async (req) => {
             similarity_boost: 0.75,
             style: 0.3,
             use_speaker_boost: true,
+            speed: 1.0,
           },
         }),
       }
@@ -58,10 +60,13 @@ serve(async (req) => {
       });
     }
 
-    const audioBuffer = await response.arrayBuffer();
-
-    return new Response(audioBuffer, {
-      headers: { ...corsHeaders, "Content-Type": "audio/mpeg" },
+    // Stream the audio response through
+    return new Response(response.body, {
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "audio/mpeg",
+        "Transfer-Encoding": "chunked",
+      },
     });
   } catch (e) {
     console.error("elevenlabs-tts error:", e);

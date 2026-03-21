@@ -24,11 +24,13 @@ const VoiceChat = () => {
   const { speak, stop: stopSpeaking, isSpeaking } = useElevenLabsTTS();
   const { isRecording, isTranscribing, startRecording, stopRecording } = useElevenLabsSTT();
 
+  const lastInputWasVoiceRef = useRef(false);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const sendMessage = async (text: string) => {
+  const sendMessage = async (text: string, fromVoice = false) => {
     if (!text.trim() || isLoading) return;
 
     const userMsg: Message = { role: "user", content: text };
@@ -36,6 +38,7 @@ const VoiceChat = () => {
     setMessages(newMessages);
     setInput("");
     setIsLoading(true);
+    lastInputWasVoiceRef.current = fromVoice;
     scrollToBottom();
 
     try {
@@ -92,8 +95,8 @@ const VoiceChat = () => {
         }
       }
 
-      // Speak with ElevenLabs TTS
-      if (assistantText) {
+      // Speak with ElevenLabs TTS only when user used voice input
+      if (assistantText && lastInputWasVoiceRef.current) {
         speak(assistantText, selectedVoice.id);
       }
     } catch (e) {
@@ -113,7 +116,7 @@ const VoiceChat = () => {
       try {
         const transcript = await stopRecording();
         if (transcript.trim()) {
-          sendMessage(transcript);
+          sendMessage(transcript, true);
         }
       } catch (e) {
         console.error("STT error:", e);
