@@ -152,7 +152,7 @@ const VoiceChat = () => {
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center animate-slide-up">
-            <PandoAvatar size="xl" />
+            <PandoAvatar size="md" />
             <p className="text-body text-muted-foreground mt-4 max-w-xs">
               Tap the microphone and tell me what's on your mind. I'm here to help!
             </p>
