@@ -15,12 +15,26 @@ const sizeMap = {
 
 const PandoAvatar = ({ size = "md", animate = true, className = "" }: PandoAvatarProps) => {
   return (
-    <img
-      src={pandoImg}
-      alt="Pando, your Guardian AI panda"
-      className={`${sizeMap[size]} object-contain ${className}`}
-      style={animate ? { animation: "sword-wave 1.8s ease-in-out infinite", transformOrigin: "70% 60%" } : {}}
-    />
+    <div className={`relative ${sizeMap[size]} ${className}`}>
+      <img
+        src={pandoImg}
+        alt="Pando, your Guardian AI panda"
+        className="h-full w-full object-contain"
+      />
+      {animate && (
+        <img
+          src={pandoImg}
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 h-full w-full object-contain"
+          style={{
+            animation: "sword-wave 1.8s ease-in-out infinite",
+            transformOrigin: "70% 60%",
+            clipPath: "polygon(58% 12%, 100% 0%, 100% 72%, 68% 76%, 60% 50%)",
+          }}
+        />
+      )}
+    </div>
   );
 };
 
