@@ -35,9 +35,10 @@ const ScamRain = () => {
       word: WORDS[Math.floor(Math.random() * WORDS.length)],
       x: Math.random() * 100,
       delay: Math.random() * 2,
-      duration: 3 + Math.random() * 3,
+      duration: 2.5 + Math.random() * 2.5,
       fontSize: 10 + Math.random() * 6,
       opacity: 0.12 + Math.random() * 0.15,
+      fallDistance: 35 + Math.random() * 15,
     };
   }, []);
 
