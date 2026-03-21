@@ -1,12 +1,13 @@
 import pandoImg from "@/assets/pando-mascot.png";
 
 interface PandoAvatarProps {
-  size?: "sm" | "md" | "lg" | "xl";
+  size?: "xs" | "sm" | "md" | "lg" | "xl";
   animate?: boolean;
   className?: string;
 }
 
 const sizeMap = {
+  xs: "w-10 h-10",
   sm: "w-48 h-48",
   md: "w-72 h-72",
   lg: "w-96 h-96",
