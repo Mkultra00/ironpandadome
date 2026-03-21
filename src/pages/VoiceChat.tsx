@@ -1,9 +1,11 @@
 import { useState, useRef } from "react";
-import { Mic, MicOff, Keyboard, ArrowLeft } from "lucide-react";
+import { Mic, MicOff, Keyboard, ArrowLeft, Volume2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import PandoAvatar from "@/components/PandoAvatar";
 import SafetyBadge from "@/components/SafetyBadge";
-import { supabase } from "@/integrations/supabase/client";
+import VoiceSelector, { VOICES, type Voice } from "@/components/VoiceSelector";
+import { useElevenLabsTTS } from "@/hooks/useElevenLabsTTS";
+import { useElevenLabsSTT } from "@/hooks/useElevenLabsSTT";
 
 interface Message {
   role: "user" | "assistant";
@@ -14,11 +16,13 @@ interface Message {
 const VoiceChat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [isListening, setIsListening] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showKeyboard, setShowKeyboard] = useState(true);
-  const recognitionRef = useRef<any>(null);
+  const [selectedVoice, setSelectedVoice] = useState<Voice>(VOICES[0]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const { speak, stop: stopSpeaking, isSpeaking } = useElevenLabsTTS();
+  const { isRecording, isTranscribing, startRecording, stopRecording } = useElevenLabsSTT();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -36,7 +40,7 @@ const VoiceChat = () => {
 
     try {
       let assistantText = "";
-      const chatMessages = newMessages.map(m => ({ role: m.role, content: m.content }));
+      const chatMessages = newMessages.map((m) => ({ role: m.role, content: m.content }));
 
       const resp = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pando-chat`,
@@ -74,10 +78,12 @@ const VoiceChat = () => {
             const content = parsed.choices?.[0]?.delta?.content;
             if (content) {
               assistantText += content;
-              setMessages(prev => {
+              setMessages((prev) => {
                 const last = prev[prev.length - 1];
                 if (last?.role === "assistant") {
-                  return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantText } : m);
+                  return prev.map((m, i) =>
+                    i === prev.length - 1 ? { ...m, content: assistantText } : m
+                  );
                 }
                 return [...prev, { role: "assistant", content: assistantText }];
               });
@@ -86,52 +92,39 @@ const VoiceChat = () => {
         }
       }
 
-      // Speak the response using browser TTS
-      if (assistantText && "speechSynthesis" in window) {
-        const utterance = new SpeechSynthesisUtterance(assistantText);
-        utterance.rate = 0.85;
-        utterance.pitch = 1.0;
-        speechSynthesis.speak(utterance);
+      // Speak with ElevenLabs TTS
+      if (assistantText) {
+        speak(assistantText, selectedVoice.id);
       }
     } catch (e) {
       console.error(e);
-      setMessages(prev => [...prev, { role: "assistant", content: "I'm sorry, I had trouble responding. Please try again!" }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: "I'm sorry, I had trouble responding. Please try again!" },
+      ]);
     }
 
     setIsLoading(false);
     scrollToBottom();
   };
 
-  const toggleListening = () => {
-    if (isListening) {
-      recognitionRef.current?.stop();
-      setIsListening(false);
-      return;
+  const handleMicToggle = async () => {
+    if (isRecording) {
+      try {
+        const transcript = await stopRecording();
+        if (transcript.trim()) {
+          sendMessage(transcript);
+        }
+      } catch (e) {
+        console.error("STT error:", e);
+      }
+    } else {
+      try {
+        await startRecording();
+      } catch {
+        setShowKeyboard(true);
+      }
     }
-
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      setShowKeyboard(true);
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = "en-US";
-
-    recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      sendMessage(transcript);
-      setIsListening(false);
-    };
-
-    recognition.onerror = () => setIsListening(false);
-    recognition.onend = () => setIsListening(false);
-
-    recognitionRef.current = recognition;
-    recognition.start();
-    setIsListening(true);
   };
 
   return (
@@ -142,10 +135,11 @@ const VoiceChat = () => {
           <ArrowLeft className="h-6 w-6 text-primary" />
         </Link>
         <PandoAvatar size="xs" animate={false} />
-        <div>
+        <div className="flex-1">
           <h2 className="font-bold text-lg">Talk to Pando</h2>
           <p className="text-sm text-muted-foreground">Your Guardian AI</p>
         </div>
+        <VoiceSelector selectedVoice={selectedVoice} onSelect={setSelectedVoice} />
       </div>
 
       {/* Messages */}
@@ -179,7 +173,7 @@ const VoiceChat = () => {
             </div>
           </div>
         ))}
-        {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
+        {(isLoading && messages[messages.length - 1]?.role !== "assistant") && (
           <div className="flex justify-start">
             <div className="bg-muted rounded-2xl rounded-bl-sm px-4 py-3 flex gap-1">
               <span className="w-2 h-2 rounded-full bg-muted-foreground animate-pulse-soft" />
@@ -188,8 +182,26 @@ const VoiceChat = () => {
             </div>
           </div>
         )}
+        {isTranscribing && (
+          <div className="flex justify-end">
+            <div className="bg-primary/20 text-primary rounded-2xl rounded-br-sm px-4 py-3 text-sm italic">
+              Transcribing your voice…
+            </div>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Speaking indicator */}
+      {isSpeaking && (
+        <div className="flex items-center justify-center gap-2 py-2 bg-primary/10 text-primary text-sm font-medium">
+          <Volume2 className="h-4 w-4 animate-pulse-soft" />
+          Pando is speaking…
+          <button onClick={stopSpeaking} className="ml-2 underline text-xs active:scale-95">
+            Stop
+          </button>
+        </div>
+      )}
 
       {/* Input area */}
       <div className="p-4 border-t border-border bg-card">
@@ -231,15 +243,16 @@ const VoiceChat = () => {
               <Keyboard className="h-6 w-6" />
             </button>
             <button
-              onClick={toggleListening}
-              className={`p-5 rounded-full shadow-lg active:scale-95 transition-colors ${
-                isListening
+              onClick={handleMicToggle}
+              disabled={isTranscribing}
+              className={`p-5 rounded-full shadow-lg active:scale-95 transition-colors disabled:opacity-50 ${
+                isRecording
                   ? "bg-danger text-danger-foreground animate-pulse-soft"
                   : "bg-primary text-primary-foreground"
               }`}
-              aria-label={isListening ? "Stop listening" : "Start listening"}
+              aria-label={isRecording ? "Stop recording" : "Start recording"}
             >
-              {isListening ? <MicOff className="h-8 w-8" /> : <Mic className="h-8 w-8" />}
+              {isRecording ? <MicOff className="h-8 w-8" /> : <Mic className="h-8 w-8" />}
             </button>
             <div className="w-12" />
           </div>
