@@ -24,11 +24,13 @@ const VoiceChat = () => {
   const { speak, stop: stopSpeaking, isSpeaking } = useElevenLabsTTS();
   const { isRecording, isTranscribing, startRecording, stopRecording } = useElevenLabsSTT();
 
+  const lastInputWasVoiceRef = useRef(false);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const sendMessage = async (text: string) => {
+  const sendMessage = async (text: string, fromVoice = false) => {
     if (!text.trim() || isLoading) return;
 
     const userMsg: Message = { role: "user", content: text };
