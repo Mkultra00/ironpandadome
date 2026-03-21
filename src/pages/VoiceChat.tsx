@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Mic, MicOff, Keyboard, ArrowLeft, Volume2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import PandoAvatar from "@/components/PandoAvatar";
@@ -20,30 +20,52 @@ const VoiceChat = () => {
   const [showKeyboard, setShowKeyboard] = useState(true);
   const [selectedVoice, setSelectedVoice] = useState<Voice>(VOICES[0]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<Message[]>([]);
 
   const { speak, stop: stopSpeaking, isSpeaking } = useElevenLabsTTS();
   const { isRecording, isTranscribing, startRecording, stopRecording } = useElevenLabsSTT();
 
   const lastInputWasVoiceRef = useRef(false);
+  const voiceModeRef = useRef(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const sendMessage = async (text: string, fromVoice = false) => {
-    if (!text.trim() || isLoading) return;
+  // Start listening (used for auto-resume after AI speaks)
+  const startListening = useCallback(async () => {
+    if (!voiceModeRef.current) return;
+    try {
+      await startRecording((transcript) => {
+        // Auto-stop callback: send the transcript automatically
+        if (transcript.trim()) {
+          sendMessageFromVoice(transcript);
+        }
+      });
+    } catch {
+      // Mic denied, fall back to keyboard
+      setShowKeyboard(true);
+      voiceModeRef.current = false;
+    }
+  }, [startRecording]);
 
+  const sendMessageFromVoice = useCallback((text: string) => {
+    if (!text.trim()) return;
+    
     const userMsg: Message = { role: "user", content: text };
-    const newMessages = [...messages, userMsg];
-    setMessages(newMessages);
-    setInput("");
+    messagesRef.current = [...messagesRef.current, userMsg];
+    setMessages([...messagesRef.current]);
     setIsLoading(true);
-    lastInputWasVoiceRef.current = fromVoice;
+    lastInputWasVoiceRef.current = true;
     scrollToBottom();
 
+    performChat(messagesRef.current);
+  }, []);
+
+  const performChat = async (currentMessages: Message[]) => {
     try {
       let assistantText = "";
-      const chatMessages = newMessages.map((m) => ({ role: m.role, content: m.content }));
+      const chatMessages = currentMessages.map((m) => ({ role: m.role, content: m.content }));
 
       const resp = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pando-chat`,
@@ -84,11 +106,15 @@ const VoiceChat = () => {
               setMessages((prev) => {
                 const last = prev[prev.length - 1];
                 if (last?.role === "assistant") {
-                  return prev.map((m, i) =>
+                  const updated = prev.map((m, i) =>
                     i === prev.length - 1 ? { ...m, content: assistantText } : m
                   );
+                  messagesRef.current = updated;
+                  return updated;
                 }
-                return [...prev, { role: "assistant", content: assistantText }];
+                const updated = [...prev, { role: "assistant" as const, content: assistantText }];
+                messagesRef.current = updated;
+                return updated;
               });
             }
           } catch {}
@@ -97,18 +123,41 @@ const VoiceChat = () => {
 
       // Speak with ElevenLabs TTS only when user used voice input
       if (assistantText && lastInputWasVoiceRef.current) {
-        speak(assistantText, selectedVoice.id);
+        speak(assistantText, selectedVoice.id, () => {
+          // After AI finishes speaking, auto-resume listening
+          startListening();
+        });
       }
     } catch (e) {
       console.error(e);
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: "I'm sorry, I had trouble responding. Please try again!" },
-      ]);
+      const errorMsg: Message = { role: "assistant", content: "I'm sorry, I had trouble responding. Please try again!" };
+      setMessages((prev) => {
+        const updated = [...prev, errorMsg];
+        messagesRef.current = updated;
+        return updated;
+      });
+      // Resume listening even on error
+      if (lastInputWasVoiceRef.current) {
+        startListening();
+      }
     }
 
     setIsLoading(false);
     scrollToBottom();
+  };
+
+  const sendMessage = async (text: string, fromVoice = false) => {
+    if (!text.trim() || isLoading) return;
+
+    const userMsg: Message = { role: "user", content: text };
+    messagesRef.current = [...messagesRef.current, userMsg];
+    setMessages([...messagesRef.current]);
+    setInput("");
+    setIsLoading(true);
+    lastInputWasVoiceRef.current = fromVoice;
+    scrollToBottom();
+
+    await performChat(messagesRef.current);
   };
 
   const handleMicToggle = async () => {
@@ -123,10 +172,39 @@ const VoiceChat = () => {
       }
     } else {
       try {
-        await startRecording();
+        await startRecording((transcript) => {
+          if (transcript.trim()) {
+            sendMessageFromVoice(transcript);
+          }
+        });
       } catch {
         setShowKeyboard(true);
+        voiceModeRef.current = false;
       }
+    }
+  };
+
+  const enterVoiceMode = async () => {
+    setShowKeyboard(false);
+    voiceModeRef.current = true;
+    // Immediately start listening
+    try {
+      await startRecording((transcript) => {
+        if (transcript.trim()) {
+          sendMessageFromVoice(transcript);
+        }
+      });
+    } catch {
+      setShowKeyboard(true);
+      voiceModeRef.current = false;
+    }
+  };
+
+  const exitVoiceMode = () => {
+    setShowKeyboard(true);
+    voiceModeRef.current = false;
+    if (isRecording) {
+      stopRecording().catch(() => {});
     }
   };
 
@@ -215,7 +293,7 @@ const VoiceChat = () => {
           >
             <button
               type="button"
-              onClick={() => setShowKeyboard(false)}
+              onClick={enterVoiceMode}
               className="p-3 rounded-lg bg-muted text-muted-foreground active:scale-95"
               aria-label="Switch to voice input"
             >
@@ -239,7 +317,7 @@ const VoiceChat = () => {
         ) : (
           <div className="flex items-center justify-center gap-4">
             <button
-              onClick={() => setShowKeyboard(true)}
+              onClick={exitVoiceMode}
               className="p-3 rounded-lg bg-muted text-muted-foreground active:scale-95"
               aria-label="Switch to typing"
             >
