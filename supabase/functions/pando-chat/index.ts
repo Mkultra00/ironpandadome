@@ -35,7 +35,9 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: voiceMode
+            ? SYSTEM_PROMPT + "\n\nIMPORTANT: You are in VOICE MODE. The user is listening, not reading. Keep every reply to 1–3 short sentences maximum. Be direct and conversational. No bullet points, no lists, no formatting."
+            : SYSTEM_PROMPT },
           ...messages,
         ],
         stream: true,
