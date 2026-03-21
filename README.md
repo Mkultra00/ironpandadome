@@ -61,6 +61,7 @@ Browse a curated knowledge base of common scam types, warning signs, and tips fo
 
 - **Forrest Pan**
 - **Frank Yu**
+- **Ji Thakur**
 
 ---
 
