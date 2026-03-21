@@ -7,10 +7,10 @@ interface PandoAvatarProps {
 }
 
 const sizeMap = {
-  sm: "w-16 h-16",
-  md: "w-24 h-24",
-  lg: "w-32 h-32",
-  xl: "w-48 h-48",
+  sm: "w-48 h-48",
+  md: "w-72 h-72",
+  lg: "w-96 h-96",
+  xl: "w-[36rem] h-[36rem]",
 };
 
 const PandoAvatar = ({ size = "md", animate = true, className = "" }: PandoAvatarProps) => {
