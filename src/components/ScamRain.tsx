@@ -74,14 +74,16 @@ const ScamRain = () => {
         <span
           key={p.id}
           className="absolute font-bold text-destructive select-none"
-          style={{
+           style={{
             left: `${p.x}%`,
             top: "-5%",
             fontSize: `${p.fontSize}px`,
             opacity: p.opacity,
-            animation: `scam-fall-${p.id} ${p.duration}s ${p.delay}s linear forwards`,
+            animation: `scam-fall ${p.duration}s ${p.delay}s linear forwards`,
+            // @ts-ignore
+            "--fall-dist": `${p.fallDistance}vh`,
             letterSpacing: "0.05em",
-          }}
+          } as React.CSSProperties}
           onAnimationEnd={() => handleAnimationEnd(p)}
         >
           {p.word}
