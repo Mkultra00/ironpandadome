@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 
 const SILENCE_THRESHOLD = 0.015; // RMS threshold for "silence"
-const SILENCE_TIMEOUT_MS = 3000; // Auto-stop after 3s of silence
+const SILENCE_TIMEOUT_MS = 2000; // Auto-stop after 2s of silence
 
 export const useElevenLabsSTT = () => {
   const [isRecording, setIsRecording] = useState(false);
