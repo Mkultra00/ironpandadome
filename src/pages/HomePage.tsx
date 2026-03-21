@@ -1,12 +1,14 @@
 import { Mic, Mail, Phone, BookOpen } from "lucide-react";
 import PandoAvatar from "@/components/PandoAvatar";
 import ActionCard from "@/components/ActionCard";
+import ScamRain from "@/components/ScamRain";
 
 const HomePage = () => {
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen pb-20 relative">
+      <ScamRain />
       {/* Hero */}
-      <div className="flex flex-col items-center pt-10 pb-6 px-6 animate-slide-up">
+      <div className="flex flex-col items-center pt-10 pb-6 px-6 animate-slide-up relative z-10">
         <PandoAvatar size="lg" />
         <h1 className="text-display text-center mt-4 text-balance">
           Iron Panda Dome
