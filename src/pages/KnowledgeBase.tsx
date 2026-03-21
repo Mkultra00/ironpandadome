@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { ArrowLeft, Search, Mail, Phone, Heart, Monitor, DollarSign, Shield, Bot } from "lucide-react";
+import { ArrowLeft, Search, Mail, Phone, Heart, Monitor, DollarSign, Shield, Bot, RefreshCw, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import PandoAvatar from "@/components/PandoAvatar";
+import { toast } from "sonner";
 
 interface Article {
   id: string;
@@ -21,7 +22,7 @@ const categories = [
   { id: "ai", label: "AI-Powered Scams", icon: Bot, color: "bg-primary/10 text-primary" },
 ];
 
-const articles: Article[] = [
+const defaultArticles: Article[] = [
   {
     id: "1",
     title: "How to Spot a Phishing Email",
@@ -59,9 +60,16 @@ const articles: Article[] = [
   },
 ];
 
+// Sort by threat level priority
+const threatPriority: Record<string, number> = { Critical: 0, High: 1, Emerging: 2 };
+const sortByThreat = (a: Article, b: Article) => (threatPriority[a.threatLevel] ?? 3) - (threatPriority[b.threatLevel] ?? 3);
+
 const KnowledgeBase = () => {
   const [search, setSearch] = useState("");
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
+  const [articles, setArticles] = useState<Article[]>([...defaultArticles].sort(sortByThreat));
+  const [isResearching, setIsResearching] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
   const filtered = articles.filter(
     (a) => a.title.toLowerCase().includes(search.toLowerCase()) || a.summary.toLowerCase().includes(search.toLowerCase())
@@ -71,6 +79,49 @@ const KnowledgeBase = () => {
     if (level === "Critical") return "bg-danger/10 text-danger";
     if (level === "Emerging") return "bg-primary/10 text-primary";
     return "bg-caution/10 text-caution-foreground";
+  };
+
+  const researchLatestScams = async () => {
+    setIsResearching(true);
+    try {
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/research-scams`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({}),
+        }
+      );
+
+      if (!resp.ok) {
+        const data = await resp.json().catch(() => ({}));
+        throw new Error(data.error || `Request failed: ${resp.status}`);
+      }
+
+      const data = await resp.json();
+
+      if (data.alerts && Array.isArray(data.alerts)) {
+        const newArticles: Article[] = data.alerts.map((alert: any, i: number) => ({
+          id: `live-${Date.now()}-${i}`,
+          title: alert.title,
+          summary: alert.summary,
+          threatLevel: alert.threatLevel as "Critical" | "High" | "Emerging",
+          content: alert.content,
+        }));
+
+        setArticles(newArticles.sort(sortByThreat));
+        setLastUpdated(data.lastUpdated || new Date().toISOString());
+        toast.success("Scam alerts updated with the latest threats!");
+      }
+    } catch (e: any) {
+      console.error("Research error:", e);
+      toast.error(e.message || "Failed to research latest scams. Try again.");
+    } finally {
+      setIsResearching(false);
+    }
   };
 
   if (selectedArticle) {
@@ -114,8 +165,33 @@ const KnowledgeBase = () => {
       </div>
 
       <div className="p-4 max-w-lg mx-auto space-y-4">
+        {/* Research Button */}
+        <button
+          onClick={researchLatestScams}
+          disabled={isResearching}
+          className="w-full flex items-center justify-center gap-2 rounded-lg bg-danger px-5 py-4 text-danger-foreground font-bold active:scale-[0.97] disabled:opacity-60 transition-all animate-slide-up shadow-md"
+        >
+          {isResearching ? (
+            <>
+              <RefreshCw className="h-5 w-5 animate-spin" />
+              Researching latest threats…
+            </>
+          ) : (
+            <>
+              <Zap className="h-5 w-5" />
+              Research Latest Scams
+            </>
+          )}
+        </button>
+
+        {lastUpdated && (
+          <p className="text-xs text-muted-foreground text-center animate-slide-up">
+            Last updated: {new Date(lastUpdated).toLocaleString()}
+          </p>
+        )}
+
         {/* Search */}
-        <div className="relative animate-slide-up">
+        <div className="relative animate-slide-up" style={{ animationDelay: "50ms" }}>
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <input
             type="text"
@@ -159,6 +235,10 @@ const KnowledgeBase = () => {
               </div>
             </button>
           ))}
+
+          {filtered.length === 0 && (
+            <p className="text-center text-muted-foreground py-8">No matching scam topics found.</p>
+          )}
         </div>
       </div>
     </div>
