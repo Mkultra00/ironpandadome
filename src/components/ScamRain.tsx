@@ -79,7 +79,7 @@ const ScamRain = () => {
             top: "-5%",
             fontSize: `${p.fontSize}px`,
             opacity: p.opacity,
-            animation: `scam-fall ${p.duration}s ${p.delay}s linear forwards`,
+            animation: `scam-fall-${p.id} ${p.duration}s ${p.delay}s linear forwards`,
             letterSpacing: "0.05em",
           }}
           onAnimationEnd={() => handleAnimationEnd(p)}
