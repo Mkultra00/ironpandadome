@@ -22,11 +22,38 @@ Browse a curated knowledge base of common scam types, warning signs, and tips fo
 
 ## Tech Stack
 
-- **Frontend**: React, TypeScript, Tailwind CSS, Vite
-- **Backend**: Lovable Cloud (Edge Functions)
-- **AI**: Lovable AI Gateway (Gemini / GPT models)
-- **Voice**: ElevenLabs Text-to-Speech & Speech-to-Text
-- **Hosting**: Lovable
+### Frontend
+- **React 18** — Component-based UI with hooks for state management
+- **TypeScript** — Type-safe codebase throughout
+- **Tailwind CSS** — Utility-first styling with a custom design system (HSL semantic tokens, custom animations)
+- **Vite** — Fast dev server and optimized production builds
+- **React Router** — Client-side routing for SPA navigation
+- **TanStack React Query** — Server state management and caching
+- **Radix UI** — Accessible, unstyled UI primitives (dialogs, tooltips, etc.)
+
+### Backend
+- **Supabase Edge Functions (Deno)** — Serverless backend functions deployed via Lovable Cloud
+  - `pando-chat` — Streams AI chat completions with Pando's personality prompt
+  - `elevenlabs-tts` — Proxies text-to-speech requests to ElevenLabs streaming API
+  - `elevenlabs-stt` — Proxies speech-to-text transcription requests to ElevenLabs Scribe
+  - `scan-email` — Analyzes emails for scam indicators using AI with structured tool-calling output
+
+### AI & Models
+- **Lovable AI Gateway** — Unified API proxy to Google Gemini and OpenAI models
+  - **Google Gemini 2.5 Flash** — Primary model for chat and email analysis (fast, low-latency)
+  - Vision capabilities for image-based scam analysis
+  - Tool-calling for structured JSON verdicts (safety ratings, red flags)
+
+### Voice
+- **ElevenLabs Text-to-Speech** — Streaming TTS using `eleven_turbo_v2_5` model for ultra-low latency voice responses via the `/stream` endpoint
+- **ElevenLabs Speech-to-Text (Scribe)** — Audio transcription using the `scribe_v2` model
+- **Web Audio API (AnalyserNode)** — Client-side silence detection (2-second threshold) for hands-free auto-send
+- **MediaSource API** — Browser-side streaming audio playback — Pando starts speaking before the full audio is generated
+- Multiple selectable voice profiles
+
+### Hosting & Infrastructure
+- **Lovable Cloud** — Managed hosting with automatic edge function deployment
+- **Supabase** — Backend-as-a-service (database, auth, edge functions, storage)
 
 ## Team
 
