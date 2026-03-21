@@ -108,7 +108,7 @@
 @keyframes scam-fall {
   0% { transform: translateY(0); opacity: inherit; }
   90% { opacity: inherit; }
-  100% { transform: translateY(45vh); opacity: 0; }
+  100% { transform: translateY(var(--fall-dist, 45vh)); opacity: 0; }
 }
 
 @keyframes scam-explode {

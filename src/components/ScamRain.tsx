@@ -14,6 +14,7 @@ interface Particle {
   duration: number;
   fontSize: number;
   opacity: number;
+  fallDistance: number;
 }
 
 interface Explosion {
@@ -35,9 +36,10 @@ const ScamRain = () => {
       word: WORDS[Math.floor(Math.random() * WORDS.length)],
       x: Math.random() * 100,
       delay: Math.random() * 2,
-      duration: 3 + Math.random() * 3,
+      duration: 2.5 + Math.random() * 2.5,
       fontSize: 10 + Math.random() * 6,
       opacity: 0.12 + Math.random() * 0.15,
+      fallDistance: 35 + Math.random() * 15,
     };
   }, []);
 
@@ -53,7 +55,7 @@ const ScamRain = () => {
     const expId = nextId++;
     setExplosions((prev) => [
       ...prev,
-      { id: expId, x: p.x, y: 48 + Math.random() * 4, word: p.word },
+      { id: expId, x: p.x, y: p.fallDistance, word: p.word },
     ]);
     setTimeout(() => {
       setExplosions((prev) => prev.filter((e) => e.id !== expId));
@@ -72,14 +74,16 @@ const ScamRain = () => {
         <span
           key={p.id}
           className="absolute font-bold text-destructive select-none"
-          style={{
+           style={{
             left: `${p.x}%`,
             top: "-5%",
             fontSize: `${p.fontSize}px`,
             opacity: p.opacity,
             animation: `scam-fall ${p.duration}s ${p.delay}s linear forwards`,
+            // @ts-ignore
+            "--fall-dist": `${p.fallDistance}vh`,
             letterSpacing: "0.05em",
-          }}
+          } as React.CSSProperties}
           onAnimationEnd={() => handleAnimationEnd(p)}
         >
           {p.word}
