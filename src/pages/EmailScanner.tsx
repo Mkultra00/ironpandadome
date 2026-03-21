@@ -92,7 +92,7 @@ const EmailScanner = () => {
         <Link to="/" className="p-2 -m-2 active:scale-95">
           <ArrowLeft className="h-6 w-6 text-primary" />
         </Link>
-        <PandoAvatar size="sm" animate={false} />
+        <PandoAvatar size="xs" animate={false} />
         <div>
           <h2 className="font-bold text-lg">Check an Email</h2>
           <p className="text-sm text-muted-foreground">Paste text or upload a screenshot</p>
