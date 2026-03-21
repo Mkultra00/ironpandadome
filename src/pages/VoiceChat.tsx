@@ -38,6 +38,7 @@ const VoiceChat = () => {
     setMessages(newMessages);
     setInput("");
     setIsLoading(true);
+    lastInputWasVoiceRef.current = fromVoice;
     scrollToBottom();
 
     try {
