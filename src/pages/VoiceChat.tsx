@@ -196,8 +196,16 @@ const VoiceChat = () => {
         {showKeyboard ? (
           <form
             onSubmit={(e) => { e.preventDefault(); sendMessage(input); }}
-            className="flex gap-2"
+            className="flex items-center gap-2"
           >
+            <button
+              type="button"
+              onClick={() => setShowKeyboard(false)}
+              className="p-3 rounded-lg bg-muted text-muted-foreground active:scale-95"
+              aria-label="Switch to voice input"
+            >
+              <Mic className="h-6 w-6" />
+            </button>
             <input
               type="text"
               value={input}
@@ -233,7 +241,7 @@ const VoiceChat = () => {
             >
               {isListening ? <MicOff className="h-8 w-8" /> : <Mic className="h-8 w-8" />}
             </button>
-            <div className="w-12" /> {/* Spacer for symmetry */}
+            <div className="w-12" />
           </div>
         )}
       </div>
