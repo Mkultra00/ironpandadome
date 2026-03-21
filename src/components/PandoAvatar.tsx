@@ -30,7 +30,7 @@ const PandoAvatar = ({ size = "md", animate = true, className = "" }: PandoAvata
           style={{
             animation: "sword-wave 1.6s ease-in-out infinite",
             transformOrigin: "28% 52%",
-            clipPath: "polygon(0% 15%, 38% 15%, 38% 65%, 0% 65%)",
+            clipPath: "polygon(0% 30%, 35% 30%, 35% 65%, 0% 65%)",
           }}
         />
       )}
