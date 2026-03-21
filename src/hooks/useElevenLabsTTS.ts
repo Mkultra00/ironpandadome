@@ -5,7 +5,10 @@ export const useElevenLabsTTS = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  const speak = useCallback(async (text: string, voiceId: string) => {
+  const onEndRef = useRef<(() => void) | null>(null);
+
+  const speak = useCallback(async (text: string, voiceId: string, onEnd?: () => void) => {
+    onEndRef.current = onEnd || null;
     // Stop any current playback
     if (audioRef.current) {
       audioRef.current.pause();
