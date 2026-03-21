@@ -95,8 +95,8 @@ const VoiceChat = () => {
         }
       }
 
-      // Speak with ElevenLabs TTS
-      if (assistantText) {
+      // Speak with ElevenLabs TTS only when user used voice input
+      if (assistantText && lastInputWasVoiceRef.current) {
         speak(assistantText, selectedVoice.id);
       }
     } catch (e) {
