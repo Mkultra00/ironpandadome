@@ -116,7 +116,7 @@ const VoiceChat = () => {
       try {
         const transcript = await stopRecording();
         if (transcript.trim()) {
-          sendMessage(transcript);
+          sendMessage(transcript, true);
         }
       } catch (e) {
         console.error("STT error:", e);
