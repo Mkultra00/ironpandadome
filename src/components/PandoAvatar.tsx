@@ -18,7 +18,8 @@ const PandoAvatar = ({ size = "md", animate = true, className = "" }: PandoAvata
     <img
       src={pandoImg}
       alt="Pando, your Guardian AI panda"
-      className={`${sizeMap[size]} object-contain ${animate ? "animate-float" : ""} ${className}`}
+      className={`${sizeMap[size]} object-contain ${className}`}
+      style={animate ? { animation: "sword-wave 2.5s ease-in-out infinite", transformOrigin: "center bottom" } : {}}
     />
   );
 };
