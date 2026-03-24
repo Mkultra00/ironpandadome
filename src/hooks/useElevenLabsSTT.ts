@@ -22,6 +22,10 @@ export const useElevenLabsSTT = () => {
       clearTimeout(silenceTimerRef.current);
       silenceTimerRef.current = null;
     }
+    if (maxTimerRef.current) {
+      clearTimeout(maxTimerRef.current);
+      maxTimerRef.current = null;
+    }
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
