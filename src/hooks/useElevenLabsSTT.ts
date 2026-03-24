@@ -156,6 +156,7 @@ export const useElevenLabsSTT = () => {
               }
               if (!speechDetectedRef.current) {
                 isStoppingRef.current = false;
+                onSilence?.();
                 return; // No speech — don't transcribe
               }
               setIsTranscribing(true);
