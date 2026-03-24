@@ -167,6 +167,36 @@ export const useElevenLabsSTT = () => {
         mediaRecorder.start();
         setIsRecording(true);
 
+        // Safety: auto-stop after max duration to prevent oversized audio
+        maxTimerRef.current = setTimeout(() => {
+          if (!isStoppingRef.current && mediaRecorder.state === "recording") {
+            console.log("Max recording duration reached, auto-stopping");
+            isStoppingRef.current = true;
+            clearSilenceDetection();
+            mediaRecorder.onstop = async () => {
+              setIsRecording(false);
+              setIsTranscribing(true);
+              mediaRecorder.stream.getTracks().forEach((t) => t.stop());
+              if (audioContextRef.current) {
+                audioContextRef.current.close();
+                audioContextRef.current = null;
+              }
+              const audioBlob = new Blob(chunksRef.current, { type: "audio/webm" });
+              try {
+                const text = await transcribeAudio(audioBlob);
+                setIsTranscribing(false);
+                isStoppingRef.current = false;
+                onAutoStop?.(text);
+              } catch (e) {
+                setIsTranscribing(false);
+                isStoppingRef.current = false;
+                console.error("Max-duration transcription error:", e);
+              }
+            };
+            mediaRecorder.stop();
+          }
+        }, MAX_RECORDING_MS);
+
         // Start silence detection after a short delay to let user begin speaking
         setTimeout(() => {
           rafRef.current = requestAnimationFrame(checkSilence);
