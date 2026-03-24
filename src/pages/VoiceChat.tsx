@@ -242,8 +242,10 @@ const VoiceChat = () => {
     return () => {
       voiceModeRef.current = false;
       stopSpeaking();
+      stopRecording().catch(() => {});
     };
-  }, [stopSpeaking]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Auto-start in voice mode with AI introduction
   useEffect(() => {
