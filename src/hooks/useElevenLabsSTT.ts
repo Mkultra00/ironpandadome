@@ -16,6 +16,7 @@ export const useElevenLabsSTT = () => {
   const rafRef = useRef<number | null>(null);
   const stopResolverRef = useRef<((transcript: string) => void) | null>(null);
   const isStoppingRef = useRef(false);
+  const speechDetectedRef = useRef(false);
 
   const clearSilenceDetection = useCallback(() => {
     if (silenceTimerRef.current) {
@@ -65,7 +66,6 @@ export const useElevenLabsSTT = () => {
 
       mediaRecorder.onstop = async () => {
         setIsRecording(false);
-        setIsTranscribing(true);
 
         mediaRecorder.stream.getTracks().forEach((t) => t.stop());
         if (audioContextRef.current) {
@@ -73,6 +73,14 @@ export const useElevenLabsSTT = () => {
           audioContextRef.current = null;
         }
 
+        if (!speechDetectedRef.current) {
+          // No speech was detected — skip transcription
+          isStoppingRef.current = false;
+          resolve("");
+          return;
+        }
+
+        setIsTranscribing(true);
         const audioBlob = new Blob(chunksRef.current, { type: "audio/webm" });
 
         try {
@@ -99,6 +107,7 @@ export const useElevenLabsSTT = () => {
         mediaRecorderRef.current = mediaRecorder;
         chunksRef.current = [];
         isStoppingRef.current = false;
+        speechDetectedRef.current = false;
 
         mediaRecorder.ondataavailable = (e) => {
           if (e.data.size > 0) chunksRef.current.push(e.data);
@@ -129,6 +138,7 @@ export const useElevenLabsSTT = () => {
 
           if (rms > SILENCE_THRESHOLD) {
             lastSpeechTime = Date.now();
+            speechDetectedRef.current = true;
           }
 
           const silenceDuration = Date.now() - lastSpeechTime;
@@ -139,12 +149,16 @@ export const useElevenLabsSTT = () => {
 
             mediaRecorder.onstop = async () => {
               setIsRecording(false);
-              setIsTranscribing(true);
               mediaRecorder.stream.getTracks().forEach((t) => t.stop());
               if (audioContextRef.current) {
                 audioContextRef.current.close();
                 audioContextRef.current = null;
               }
+              if (!speechDetectedRef.current) {
+                isStoppingRef.current = false;
+                return; // No speech — don't transcribe
+              }
+              setIsTranscribing(true);
               const audioBlob = new Blob(chunksRef.current, { type: "audio/webm" });
               try {
                 const text = await transcribeAudio(audioBlob);
@@ -175,12 +189,16 @@ export const useElevenLabsSTT = () => {
             clearSilenceDetection();
             mediaRecorder.onstop = async () => {
               setIsRecording(false);
-              setIsTranscribing(true);
               mediaRecorder.stream.getTracks().forEach((t) => t.stop());
               if (audioContextRef.current) {
                 audioContextRef.current.close();
                 audioContextRef.current = null;
               }
+              if (!speechDetectedRef.current) {
+                isStoppingRef.current = false;
+                return;
+              }
+              setIsTranscribing(true);
               const audioBlob = new Blob(chunksRef.current, { type: "audio/webm" });
               try {
                 const text = await transcribeAudio(audioBlob);
