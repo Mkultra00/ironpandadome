@@ -18,6 +18,7 @@ const VoiceChat = () => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showKeyboard, setShowKeyboard] = useState(false);
+  const [stillListening, setStillListening] = useState(false);
   const hasIntroducedRef = useRef(false);
   const [selectedVoice, setSelectedVoice] = useState<Voice>(VOICES[0]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -33,6 +34,25 @@ const VoiceChat = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const handleSilence = useCallback(() => {
+    setStillListening(true);
+    setTimeout(() => setStillListening(false), 2000);
+    // Restart listening after silence
+    setTimeout(() => {
+      if (voiceModeRef.current && !isLoading) {
+        startRecording((transcript) => {
+          if (transcript.trim()) {
+            setStillListening(false);
+            sendMessageFromVoice(transcript);
+          }
+        }, handleSilence).catch(() => {
+          setShowKeyboard(true);
+          voiceModeRef.current = false;
+        });
+      }
+    }, 300);
+  }, [startRecording, isLoading]);
+
   // Start listening (used for auto-resume after AI speaks)
   const startListening = useCallback(async () => {
     if (!voiceModeRef.current) return;
@@ -40,9 +60,10 @@ const VoiceChat = () => {
       await startRecording((transcript) => {
         // Auto-stop callback: send the transcript automatically
         if (transcript.trim()) {
+          setStillListening(false);
           sendMessageFromVoice(transcript);
         }
-      });
+      }, handleSilence);
     } catch {
       // Mic denied, fall back to keyboard
       setShowKeyboard(true);
@@ -175,9 +196,10 @@ const VoiceChat = () => {
       try {
         await startRecording((transcript) => {
           if (transcript.trim()) {
+            setStillListening(false);
             sendMessageFromVoice(transcript);
           }
-        });
+        }, handleSilence);
       } catch {
         setShowKeyboard(true);
         voiceModeRef.current = false;
@@ -192,9 +214,10 @@ const VoiceChat = () => {
     try {
       await startRecording((transcript) => {
         if (transcript.trim()) {
+          setStillListening(false);
           sendMessageFromVoice(transcript);
         }
-      });
+      }, handleSilence);
     } catch {
       setShowKeyboard(true);
       voiceModeRef.current = false;
@@ -288,6 +311,14 @@ const VoiceChat = () => {
               <span className="w-2 h-2 rounded-full bg-muted-foreground animate-pulse-soft" />
               <span className="w-2 h-2 rounded-full bg-muted-foreground animate-pulse-soft" style={{ animationDelay: "200ms" }} />
               <span className="w-2 h-2 rounded-full bg-muted-foreground animate-pulse-soft" style={{ animationDelay: "400ms" }} />
+            </div>
+          </div>
+        )}
+        {stillListening && !isLoading && (
+          <div className="flex justify-start animate-slide-up">
+            <div className="bg-muted/60 text-muted-foreground rounded-2xl rounded-bl-sm px-4 py-3 text-sm italic flex items-center gap-2">
+              <Mic className="h-4 w-4 animate-pulse-soft" />
+              Still listening…
             </div>
           </div>
         )}

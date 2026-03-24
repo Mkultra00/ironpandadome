@@ -100,7 +100,7 @@ export const useElevenLabsSTT = () => {
   }, [clearSilenceDetection, transcribeAudio]);
 
   const startRecording = useCallback(
-    async (onAutoStop?: (transcript: string) => void) => {
+    async (onAutoStop?: (transcript: string) => void, onSilence?: () => void) => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         const mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
@@ -156,6 +156,7 @@ export const useElevenLabsSTT = () => {
               }
               if (!speechDetectedRef.current) {
                 isStoppingRef.current = false;
+                onSilence?.();
                 return; // No speech — don't transcribe
               }
               setIsTranscribing(true);
@@ -196,6 +197,7 @@ export const useElevenLabsSTT = () => {
               }
               if (!speechDetectedRef.current) {
                 isStoppingRef.current = false;
+                onSilence?.();
                 return;
               }
               setIsTranscribing(true);
