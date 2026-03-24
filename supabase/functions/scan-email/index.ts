@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `You are Pando, the Iron Panda — a cybersecurity expert analyzing emails for scams and phishing.
+const SYSTEM_PROMPT = `You are Pando, the guardian angel of Seraph — a cybersecurity expert analyzing emails for scams and phishing.
 
 Analyze the email provided (as text and/or screenshot image) and respond ONLY with valid JSON in this exact format:
 {
