@@ -28,6 +28,10 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
+    const voiceSuffix = voiceMode
+      ? "\n\nIMPORTANT: You are in VOICE MODE. The user is listening, not reading. Keep every reply to 1–3 short sentences maximum. Be direct and conversational. No bullet points, no lists, no formatting. For introductions, just say hi, your name, and what you do in ONE sentence."
+      : "";
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -37,9 +41,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: voiceMode
-            ? SYSTEM_PROMPT + "\n\nIMPORTANT: You are in VOICE MODE. The user is listening, not reading. Keep every reply to 1–3 short sentences maximum. Be direct and conversational. No bullet points, no lists, no formatting."
-            : SYSTEM_PROMPT },
+          { role: "system", content: SYSTEM_PROMPT + voiceSuffix },
           ...messages,
         ],
         stream: true,
