@@ -72,6 +72,12 @@ export const useElevenLabsTTS = () => {
 
           pump().catch((e) => {
             if (e.name !== "AbortError") console.error("Stream pump error:", e);
+            // If pump fails, ensure stream ends so onended fires
+            try {
+              if (mediaSource.readyState === "open") {
+                mediaSource.endOfStream();
+              }
+            } catch {}
           });
         });
 
