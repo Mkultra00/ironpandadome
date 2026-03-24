@@ -17,7 +17,8 @@ const VoiceChat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [showKeyboard, setShowKeyboard] = useState(true);
+  const [showKeyboard, setShowKeyboard] = useState(false);
+  const hasIntroducedRef = useRef(false);
   const [selectedVoice, setSelectedVoice] = useState<Voice>(VOICES[0]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesRef = useRef<Message[]>([]);
