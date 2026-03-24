@@ -17,7 +17,8 @@ const VoiceChat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [showKeyboard, setShowKeyboard] = useState(true);
+  const [showKeyboard, setShowKeyboard] = useState(false);
+  const hasIntroducedRef = useRef(false);
   const [selectedVoice, setSelectedVoice] = useState<Voice>(VOICES[0]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesRef = useRef<Message[]>([]);
@@ -220,6 +221,20 @@ const VoiceChat = () => {
       stopSpeaking();
     };
   }, [stopSpeaking]);
+
+  // Auto-start in voice mode with AI introduction
+  useEffect(() => {
+    if (hasIntroducedRef.current) return;
+    hasIntroducedRef.current = true;
+    voiceModeRef.current = true;
+    lastInputWasVoiceRef.current = true;
+
+    const introMsg: Message = { role: "user", content: "Hi, I just opened the app. Please introduce yourself briefly." };
+    messagesRef.current = [introMsg];
+    setIsLoading(true);
+    performChat(messagesRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="flex flex-col h-screen pb-16">
