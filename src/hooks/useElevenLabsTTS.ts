@@ -112,6 +112,7 @@ export const useElevenLabsTTS = () => {
           setIsSpeaking(false);
           URL.revokeObjectURL(audioUrl);
           audioRef.current = null;
+          onEndRef.current?.();
         };
 
         await audio.play();
