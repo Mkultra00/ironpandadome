@@ -229,12 +229,11 @@ const VoiceChat = () => {
     voiceModeRef.current = true;
     lastInputWasVoiceRef.current = true;
 
-    // Send a hidden greeting prompt so the AI introduces itself
     const introMsg: Message = { role: "user", content: "Hi, I just opened the app. Please introduce yourself briefly." };
     messagesRef.current = [introMsg];
-    // Don't show the user message in the UI — only show the AI response
     setIsLoading(true);
     performChat(messagesRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
