@@ -1,8 +1,8 @@
-# Iron Pando Dome 🐼🛡️
+# Seraph 🛡️
 
 **Your Guardian AI — Protecting You From Scams, One Conversation at a Time**
 
-Iron Pando Dome is a mobile-first web application designed to help people — especially seniors and vulnerable populations — identify and avoid online scams. Powered by an AI assistant named **Pando**, the app provides real-time, conversational guidance through voice and text.
+Seraph is a mobile-first web application designed to help people — especially seniors and vulnerable populations — identify and avoid online scams. Powered by an AI assistant named **Pando**, the app provides real-time, conversational guidance through voice and text.
 
 ## What It Does
 
@@ -57,7 +57,7 @@ Browse a curated knowledge base of common scam types, warning signs, and tips fo
 
 ## Team
 
-**Iron Pando Dome** is built by the **Iron Panda** team:
+**Seraph** is built by the **Iron Panda** team:
 
 - **Forrest Pan**
 - **Frank Yu**

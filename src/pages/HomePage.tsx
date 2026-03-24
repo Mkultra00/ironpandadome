@@ -11,7 +11,7 @@ const HomePage = () => {
       <div className="flex flex-col items-center pt-10 pb-6 px-6 animate-slide-up relative z-10">
         <PandoAvatar size="lg" />
         <h1 className="text-display text-center mt-4 text-balance">
-          Iron Panda Dome
+          Seraph
         </h1>
         <p className="text-body text-muted-foreground text-center mt-2 max-w-sm text-balance">
           Hi! I'm <strong>Pando</strong>, your Guardian AI. How can I help you stay safe today?
