@@ -34,6 +34,25 @@ const VoiceChat = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const handleSilence = useCallback(() => {
+    setStillListening(true);
+    setTimeout(() => setStillListening(false), 2000);
+    // Restart listening after silence
+    setTimeout(() => {
+      if (voiceModeRef.current && !isLoading) {
+        startRecording((transcript) => {
+          if (transcript.trim()) {
+            setStillListening(false);
+            sendMessageFromVoice(transcript);
+          }
+        }, handleSilence).catch(() => {
+          setShowKeyboard(true);
+          voiceModeRef.current = false;
+        });
+      }
+    }, 300);
+  }, [startRecording, isLoading]);
+
   // Start listening (used for auto-resume after AI speaks)
   const startListening = useCallback(async () => {
     if (!voiceModeRef.current) return;
@@ -41,9 +60,10 @@ const VoiceChat = () => {
       await startRecording((transcript) => {
         // Auto-stop callback: send the transcript automatically
         if (transcript.trim()) {
+          setStillListening(false);
           sendMessageFromVoice(transcript);
         }
-      });
+      }, handleSilence);
     } catch {
       // Mic denied, fall back to keyboard
       setShowKeyboard(true);
