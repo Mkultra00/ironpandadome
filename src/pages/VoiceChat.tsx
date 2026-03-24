@@ -321,6 +321,7 @@ const VoiceChat = () => {
               Still listening…
             </div>
           </div>
+        )}
         {isTranscribing && (
           <div className="flex justify-end">
             <div className="bg-primary/20 text-primary rounded-2xl rounded-br-sm px-4 py-3 text-sm italic">
