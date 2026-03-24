@@ -196,9 +196,10 @@ const VoiceChat = () => {
       try {
         await startRecording((transcript) => {
           if (transcript.trim()) {
+            setStillListening(false);
             sendMessageFromVoice(transcript);
           }
-        });
+        }, handleSilence);
       } catch {
         setShowKeyboard(true);
         voiceModeRef.current = false;
