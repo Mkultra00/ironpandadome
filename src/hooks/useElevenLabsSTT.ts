@@ -149,12 +149,16 @@ export const useElevenLabsSTT = () => {
 
             mediaRecorder.onstop = async () => {
               setIsRecording(false);
-              setIsTranscribing(true);
               mediaRecorder.stream.getTracks().forEach((t) => t.stop());
               if (audioContextRef.current) {
                 audioContextRef.current.close();
                 audioContextRef.current = null;
               }
+              if (!speechDetectedRef.current) {
+                isStoppingRef.current = false;
+                return; // No speech — don't transcribe
+              }
+              setIsTranscribing(true);
               const audioBlob = new Blob(chunksRef.current, { type: "audio/webm" });
               try {
                 const text = await transcribeAudio(audioBlob);
