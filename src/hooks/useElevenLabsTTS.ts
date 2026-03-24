@@ -72,6 +72,12 @@ export const useElevenLabsTTS = () => {
 
           pump().catch((e) => {
             if (e.name !== "AbortError") console.error("Stream pump error:", e);
+            // If pump fails, ensure stream ends so onended fires
+            try {
+              if (mediaSource.readyState === "open") {
+                mediaSource.endOfStream();
+              }
+            } catch {}
           });
         });
 
@@ -85,6 +91,7 @@ export const useElevenLabsTTS = () => {
           setIsSpeaking(false);
           URL.revokeObjectURL(audioUrl);
           audioRef.current = null;
+          onEndRef.current?.();
         };
 
         await audio.play();
@@ -105,6 +112,7 @@ export const useElevenLabsTTS = () => {
           setIsSpeaking(false);
           URL.revokeObjectURL(audioUrl);
           audioRef.current = null;
+          onEndRef.current?.();
         };
 
         await audio.play();
@@ -114,6 +122,10 @@ export const useElevenLabsTTS = () => {
         console.error("TTS error:", e);
       }
       setIsSpeaking(false);
+      // Ensure listening resumes even on TTS failure
+      if (e.name !== "AbortError") {
+        onEndRef.current?.();
+      }
     }
   }, []);
 
