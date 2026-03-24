@@ -314,6 +314,13 @@ const VoiceChat = () => {
             </div>
           </div>
         )}
+        {stillListening && !isLoading && (
+          <div className="flex justify-start animate-slide-up">
+            <div className="bg-muted/60 text-muted-foreground rounded-2xl rounded-bl-sm px-4 py-3 text-sm italic flex items-center gap-2">
+              <Mic className="h-4 w-4 animate-pulse-soft" />
+              Still listening…
+            </div>
+          </div>
         {isTranscribing && (
           <div className="flex justify-end">
             <div className="bg-primary/20 text-primary rounded-2xl rounded-br-sm px-4 py-3 text-sm italic">
