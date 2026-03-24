@@ -57,7 +57,7 @@ Browse a curated knowledge base of common scam types, warning signs, and tips fo
 
 ## Team
 
-**Iron Pando Dome** is built by the **Iron Panda** team:
+**Seraph** is built by the **Iron Panda** team:
 
 - **Forrest Pan**
 - **Frank Yu**
