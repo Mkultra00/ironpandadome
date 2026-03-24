@@ -122,6 +122,10 @@ export const useElevenLabsTTS = () => {
         console.error("TTS error:", e);
       }
       setIsSpeaking(false);
+      // Ensure listening resumes even on TTS failure
+      if (e.name !== "AbortError") {
+        onEndRef.current?.();
+      }
     }
   }, []);
 
