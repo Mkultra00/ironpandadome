@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Mic, MicOff, Keyboard, ArrowLeft, Volume2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import PandoAvatar from "@/components/PandoAvatar";
@@ -200,13 +200,26 @@ const VoiceChat = () => {
     }
   };
 
-  const exitVoiceMode = () => {
-    setShowKeyboard(true);
+  const cleanupAll = useCallback(() => {
     voiceModeRef.current = false;
+    setShowKeyboard(true);
     if (isRecording) {
       stopRecording().catch(() => {});
     }
+    stopSpeaking();
+  }, [isRecording, stopRecording, stopSpeaking]);
+
+  const exitVoiceMode = () => {
+    cleanupAll();
   };
+
+  // Cleanup on unmount (navigating away)
+  useEffect(() => {
+    return () => {
+      voiceModeRef.current = false;
+      stopSpeaking();
+    };
+  }, [stopSpeaking]);
 
   return (
     <div className="flex flex-col h-screen pb-16">
