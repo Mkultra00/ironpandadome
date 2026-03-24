@@ -100,6 +100,7 @@ export const useElevenLabsSTT = () => {
         mediaRecorderRef.current = mediaRecorder;
         chunksRef.current = [];
         isStoppingRef.current = false;
+        speechDetectedRef.current = false;
 
         mediaRecorder.ondataavailable = (e) => {
           if (e.data.size > 0) chunksRef.current.push(e.data);
