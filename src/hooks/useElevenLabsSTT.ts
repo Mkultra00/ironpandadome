@@ -16,6 +16,7 @@ export const useElevenLabsSTT = () => {
   const rafRef = useRef<number | null>(null);
   const stopResolverRef = useRef<((transcript: string) => void) | null>(null);
   const isStoppingRef = useRef(false);
+  const speechDetectedRef = useRef(false);
 
   const clearSilenceDetection = useCallback(() => {
     if (silenceTimerRef.current) {
