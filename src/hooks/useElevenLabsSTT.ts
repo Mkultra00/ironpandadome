@@ -12,6 +12,7 @@ export const useElevenLabsSTT = () => {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const maxTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rafRef = useRef<number | null>(null);
   const stopResolverRef = useRef<((transcript: string) => void) | null>(null);
   const isStoppingRef = useRef(false);
