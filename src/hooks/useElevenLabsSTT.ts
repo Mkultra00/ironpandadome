@@ -131,6 +131,7 @@ export const useElevenLabsSTT = () => {
 
           if (rms > SILENCE_THRESHOLD) {
             lastSpeechTime = Date.now();
+            speechDetectedRef.current = true;
           }
 
           const silenceDuration = Date.now() - lastSpeechTime;
