@@ -29,7 +29,7 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const voiceSuffix = voiceMode
-      ? "\n\nIMPORTANT: You are in VOICE MODE. The user is listening, not reading. Keep every reply to 1–3 short sentences maximum. Be direct and conversational. No bullet points, no lists, no formatting. For introductions, just say hi, your name, and what you do in ONE sentence."
+      ? "\n\nIMPORTANT: You are in VOICE MODE. The user is listening, not reading. Keep every reply to 1–3 short sentences maximum. Be direct and conversational. No bullet points, no lists, no formatting. For introductions, say hi, your name, what you do in ONE sentence, and mention they can tap the keyboard icon at the bottom if they prefer to type instead."
       : "";
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
