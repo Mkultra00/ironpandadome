@@ -222,6 +222,21 @@ const VoiceChat = () => {
     };
   }, [stopSpeaking]);
 
+  // Auto-start in voice mode with AI introduction
+  useEffect(() => {
+    if (hasIntroducedRef.current) return;
+    hasIntroducedRef.current = true;
+    voiceModeRef.current = true;
+    lastInputWasVoiceRef.current = true;
+
+    // Send a hidden greeting prompt so the AI introduces itself
+    const introMsg: Message = { role: "user", content: "Hi, I just opened the app. Please introduce yourself briefly." };
+    messagesRef.current = [introMsg];
+    // Don't show the user message in the UI — only show the AI response
+    setIsLoading(true);
+    performChat(messagesRef.current);
+  }, []);
+
   return (
     <div className="flex flex-col h-screen pb-16">
       {/* Header */}
