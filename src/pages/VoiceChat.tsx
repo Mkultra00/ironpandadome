@@ -242,6 +242,10 @@ const VoiceChat = () => {
     return () => {
       voiceModeRef.current = false;
       stopSpeaking();
+      // Stop any active recording
+      if (mediaRecorderCleanupRef.current) {
+        mediaRecorderCleanupRef.current();
+      }
     };
   }, [stopSpeaking]);
 
