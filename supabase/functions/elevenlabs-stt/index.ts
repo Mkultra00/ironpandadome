@@ -11,6 +11,15 @@ serve(async (req) => {
   }
 
   try {
+    // Reject oversized payloads early (max 4MB)
+    const contentLength = req.headers.get("content-length");
+    if (contentLength && parseInt(contentLength) > 4 * 1024 * 1024) {
+      return new Response(JSON.stringify({ error: "Audio file too large (max 4MB)" }), {
+        status: 413,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
     if (!ELEVENLABS_API_KEY) throw new Error("ELEVENLABS_API_KEY is not configured");
 

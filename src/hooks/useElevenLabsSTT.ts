@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from "react";
 
 const SILENCE_THRESHOLD = 0.015; // RMS threshold for "silence"
 const SILENCE_TIMEOUT_MS = 2000; // Auto-stop after 2s of silence
+const MAX_RECORDING_MS = 30000; // Max 30 seconds to avoid compute limits
 
 export const useElevenLabsSTT = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -11,6 +12,7 @@ export const useElevenLabsSTT = () => {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const maxTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rafRef = useRef<number | null>(null);
   const stopResolverRef = useRef<((transcript: string) => void) | null>(null);
   const isStoppingRef = useRef(false);
@@ -19,6 +21,10 @@ export const useElevenLabsSTT = () => {
     if (silenceTimerRef.current) {
       clearTimeout(silenceTimerRef.current);
       silenceTimerRef.current = null;
+    }
+    if (maxTimerRef.current) {
+      clearTimeout(maxTimerRef.current);
+      maxTimerRef.current = null;
     }
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current);
@@ -160,6 +166,36 @@ export const useElevenLabsSTT = () => {
 
         mediaRecorder.start();
         setIsRecording(true);
+
+        // Safety: auto-stop after max duration to prevent oversized audio
+        maxTimerRef.current = setTimeout(() => {
+          if (!isStoppingRef.current && mediaRecorder.state === "recording") {
+            console.log("Max recording duration reached, auto-stopping");
+            isStoppingRef.current = true;
+            clearSilenceDetection();
+            mediaRecorder.onstop = async () => {
+              setIsRecording(false);
+              setIsTranscribing(true);
+              mediaRecorder.stream.getTracks().forEach((t) => t.stop());
+              if (audioContextRef.current) {
+                audioContextRef.current.close();
+                audioContextRef.current = null;
+              }
+              const audioBlob = new Blob(chunksRef.current, { type: "audio/webm" });
+              try {
+                const text = await transcribeAudio(audioBlob);
+                setIsTranscribing(false);
+                isStoppingRef.current = false;
+                onAutoStop?.(text);
+              } catch (e) {
+                setIsTranscribing(false);
+                isStoppingRef.current = false;
+                console.error("Max-duration transcription error:", e);
+              }
+            };
+            mediaRecorder.stop();
+          }
+        }, MAX_RECORDING_MS);
 
         // Start silence detection after a short delay to let user begin speaking
         setTimeout(() => {
